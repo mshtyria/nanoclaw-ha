@@ -20,7 +20,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 
 # ── Claude Code CLI ──────────────────────────────────────────────────────────
 # Required both by the NanoClaw orchestrator and by agent containers
-RUN npm install -g @anthropic-ai/claude-code --unsafe-perm
+RUN npm install -g @anthropic-ai/claude-code
 
 # ── NanoClaw ─────────────────────────────────────────────────────────────────
 WORKDIR /nanoclaw

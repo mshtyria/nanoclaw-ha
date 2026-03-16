@@ -38,30 +38,41 @@ if [[ "${MESSENGER}" == "telegram" ]]; then
 fi
 
 # ── Persistent data directory ────────────────────────────────────────────────
-# HA maps /data to persistent storage; symlink NanoClaw data dirs there.
+# HA maps /data to persistent storage; move NanoClaw runtime dirs there.
 DATA_DIR=/data/nanoclaw
-mkdir -p "${DATA_DIR}/store" "${DATA_DIR}/groups" "${DATA_DIR}/data"
+mkdir -p "${DATA_DIR}/store" "${DATA_DIR}/data" "${DATA_DIR}/.config"
 
 cd /nanoclaw
 
-for dir in store groups data; do
+# store/ and data/ — simple symlinks; no pre-existing source content
+for dir in store data; do
     if [[ ! -L "${dir}" ]]; then
         rm -rf "${dir}"
         ln -s "${DATA_DIR}/${dir}" "${dir}"
     fi
 done
 
-# Also persist WhatsApp / Telegram session files
-mkdir -p "${DATA_DIR}/.config"
+# groups/ contains source defaults (global/, main/) — copy once, then symlink
+if [[ ! -d "${DATA_DIR}/groups" ]]; then
+    bashio::log.info "Copying default group configs to persistent storage..."
+    cp -r /nanoclaw/groups "${DATA_DIR}/groups"
+fi
+if [[ ! -L "groups" ]]; then
+    rm -rf groups
+    ln -s "${DATA_DIR}/groups" groups
+fi
+
+# Persist WhatsApp / Telegram session files (~/.config/nanoclaw)
 if [[ ! -L "${HOME}/.config/nanoclaw" ]]; then
     mkdir -p "${HOME}/.config"
     ln -s "${DATA_DIR}/.config" "${HOME}/.config/nanoclaw"
 fi
 
 # ── Build the nanoclaw-agent Docker image if it doesn't exist yet ────────────
+# The agent Dockerfile lives in container/ (not agent/) within the NanoClaw repo
 if ! docker image inspect nanoclaw-agent:latest &>/dev/null; then
     bashio::log.info "Building nanoclaw-agent container image (first run, this may take a few minutes)..."
-    docker build -t nanoclaw-agent:latest /nanoclaw/agent \
+    docker build -t nanoclaw-agent:latest /nanoclaw/container \
         && bashio::log.info "nanoclaw-agent image built successfully." \
         || bashio::log.warning "Could not build nanoclaw-agent image. Agent containers will fail until the image is available."
 fi
