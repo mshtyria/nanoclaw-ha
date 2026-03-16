@@ -155,6 +155,16 @@ if [[ -d "${APP_DIR}/data/ipc" ]]; then
     bashio::log.info "IPC directory cleaned and permissions fixed"
 fi
 
+# Clean stale Claude Code sessions from previous failed runs.
+# Agent containers try "resumeAt: latest" but stale session refs cause errors.
+if [[ -d "${APP_DIR}/data/sessions" ]]; then
+    find "${APP_DIR}/data/sessions" -type d -exec chmod 777 {} +
+    find "${APP_DIR}/data/sessions" -type f -exec chmod 666 {} +
+    # Remove stale session data so agents start fresh
+    find "${APP_DIR}/data/sessions" -name ".claude" -type d -exec rm -rf {} + 2>/dev/null
+    bashio::log.info "Session data cleaned"
+fi
+
 # Copy default group configs if not present
 if [[ ! -f "${APP_DIR}/groups/main/CLAUDE.md" ]] && [[ -f "/nanoclaw/groups/main/CLAUDE.md" ]]; then
     cp -a /nanoclaw/groups/main/. "${APP_DIR}/groups/main/"
