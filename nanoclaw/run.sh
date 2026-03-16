@@ -37,6 +37,29 @@ if [[ "${MESSENGER}" == "telegram" ]]; then
     export TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN}"
 fi
 
+# ── Docker socket diagnostics ────────────────────────────────────────────────
+bashio::log.info "Docker socket check:"
+bashio::log.info "  /var/run/docker.sock exists: $(test -e /var/run/docker.sock && echo YES || echo NO)"
+bashio::log.info "  /run/docker.sock exists: $(test -e /run/docker.sock && echo YES || echo NO)"
+bashio::log.info "  /var/run is symlink: $(test -L /var/run && echo YES || echo NO)"
+bashio::log.info "  ls /run/docker*: $(ls -la /run/docker* 2>&1 || echo 'nothing')"
+bashio::log.info "  ls /var/run/docker*: $(ls -la /var/run/docker* 2>&1 || echo 'nothing')"
+bashio::log.info "  DOCKER_HOST=${DOCKER_HOST:-not set}"
+
+# Try to find the Docker socket and set DOCKER_HOST accordingly
+if [[ -S /var/run/docker.sock ]]; then
+    export DOCKER_HOST="unix:///var/run/docker.sock"
+elif [[ -S /run/docker.sock ]]; then
+    export DOCKER_HOST="unix:///run/docker.sock"
+else
+    bashio::log.warning "Docker socket not found! NanoClaw needs docker_api:true in addon config."
+    bashio::log.warning "Listing /run and /var/run for debug:"
+    ls -la /run/ 2>&1 | while read line; do bashio::log.warning "  /run/ $line"; done
+    ls -la /var/run/ 2>&1 | while read line; do bashio::log.warning "  /var/run/ $line"; done
+fi
+
+bashio::log.info "docker info test: $(docker info --format '{{.ServerVersion}}' 2>&1)"
+
 # ── Persistent data directory ────────────────────────────────────────────────
 # HA maps /data to persistent storage; move NanoClaw runtime dirs there.
 DATA_DIR=/data/nanoclaw
