@@ -1,6 +1,6 @@
 name: NanoClaw
 description: Personal AI agent with container isolation. Connect Claude to WhatsApp or Telegram and automate tasks securely.
-version: "1.0.17"
+version: "1.0.18"
 slug: nanoclaw
 url: https://nanoclaw.dev
 init: false
@@ -19,11 +19,7 @@ docker_api: true
 map:
   - data
 
-ports:
-  3001/tcp: null
-
-ports_description:
-  3001/tcp: Credential proxy (internal use only, leave null unless debugging)
+host_network: true
 
 options:
   anthropic_api_key: ""
