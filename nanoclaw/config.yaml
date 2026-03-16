@@ -1,0 +1,43 @@
+name: NanoClaw
+description: Personal AI agent with container isolation. Connect Claude to WhatsApp or Telegram and automate tasks securely.
+version: "1.0.0"
+slug: nanoclaw
+url: https://nanoclaw.dev
+init: false
+
+arch:
+  - amd64
+  - aarch64
+
+# NanoClaw spawns isolated Docker containers for each agent session
+docker_api: true
+
+# Persistent storage for credentials, sessions, and agent data
+map:
+  - data
+
+ports:
+  3001/tcp: null
+
+ports_description:
+  3001/tcp: Credential proxy (internal use only, leave null unless debugging)
+
+options:
+  anthropic_api_key: ""
+  assistant_name: Andy
+  assistant_has_own_number: false
+  messenger: whatsapp
+  telegram_bot_token: ""
+  max_concurrent_containers: 5
+  container_timeout: 1800
+  log_level: info
+
+schema:
+  anthropic_api_key: str
+  assistant_name: str
+  assistant_has_own_number: bool
+  messenger: list(whatsapp|telegram)
+  telegram_bot_token: str?
+  max_concurrent_containers: int(1,20)
+  container_timeout: int(60,86400)
+  log_level: list(debug|info|warning|error)
