@@ -193,4 +193,10 @@ bashio::log.info "Starting NanoClaw from: ${APP_DIR}"
 bashio::log.info "  assistant: ${ASSISTANT_NAME}, messenger: ${MESSENGER}"
 
 cd "${APP_DIR}"
+
+# NanoClaw runs as root in the addon, but agent containers run as node (uid 1000).
+# Set umask so IPC files created by the orchestrator are world-writable,
+# allowing the agent container to read and delete them.
+umask 0000
+
 exec node dist/index.js
