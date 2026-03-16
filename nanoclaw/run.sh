@@ -134,17 +134,45 @@ fi
 
 # ── Register Telegram chat if configured ─────────────────────────────────────
 if [[ "${MESSENGER}" == "telegram" ]] && ! bashio::var.is_empty "${TELEGRAM_CHAT_ID}"; then
-    # Register the chat via NanoClaw's setup/register CLI
-    bashio::log.info "Registering Telegram chat: ${TELEGRAM_CHAT_ID}"
-    node /nanoclaw/dist/setup/register.js \
-        --jid "${TELEGRAM_CHAT_ID}" \
-        --name "HomeAssistant" \
-        --trigger "@${ASSISTANT_NAME}" \
-        --folder main \
-        --channel telegram \
-        --is-main \
-        --assistant-name "${ASSISTANT_NAME}" \
-        2>&1 || bashio::log.warning "Chat registration returned non-zero (may already be registered)"
+    # Ensure chat ID has tg: prefix
+    CHAT_JID="${TELEGRAM_CHAT_ID}"
+    [[ "${CHAT_JID}" != tg:* ]] && CHAT_JID="tg:${CHAT_JID}"
+
+    bashio::log.info "Registering Telegram chat: ${CHAT_JID}"
+
+    # Direct SQLite insert into NanoClaw's database
+    node -e "
+      const Database = require('better-sqlite3');
+      const db = new Database('/nanoclaw/store/messages.db');
+      db.exec(\`
+        CREATE TABLE IF NOT EXISTS registered_groups (
+          jid TEXT PRIMARY KEY,
+          name TEXT,
+          folder TEXT,
+          trigger_pattern TEXT,
+          added_at TEXT,
+          container_config TEXT,
+          requires_trigger INTEGER DEFAULT 1,
+          is_main INTEGER DEFAULT 0
+        )
+      \`);
+      db.prepare(\`
+        INSERT OR REPLACE INTO registered_groups
+        (jid, name, folder, trigger_pattern, added_at, container_config, requires_trigger, is_main)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      \`).run(
+        '${CHAT_JID}',
+        'HomeAssistant',
+        'main',
+        '@${ASSISTANT_NAME}',
+        new Date().toISOString(),
+        '{}',
+        0,
+        1
+      );
+      console.log('Chat registered successfully');
+      db.close();
+    " 2>&1 || bashio::log.warning "Chat registration failed (check database path)"
 fi
 
 # ── Start NanoClaw ───────────────────────────────────────────────────────────
