@@ -1,6 +1,6 @@
 name: NanoClaw
 description: Personal AI agent with container isolation. Connect Claude to WhatsApp or Telegram and automate tasks securely.
-version: "1.0.18"
+version: "1.0.19"
 slug: nanoclaw
 url: https://nanoclaw.dev
 init: false
@@ -20,6 +20,13 @@ map:
   - data
 
 host_network: true
+
+# Web UI (sidebar panel in HA)
+ingress: true
+ingress_port: 8099
+ingress_entry: /
+panel_icon: mdi:robot
+panel_title: NanoClaw
 
 options:
   anthropic_api_key: ""

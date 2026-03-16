@@ -219,6 +219,12 @@ if [[ "${MESSENGER}" == "telegram" ]] && ! bashio::var.is_empty "${TELEGRAM_CHAT
     " 2>&1 || bashio::log.warning "Chat registration failed"
 fi
 
+# ── Start dashboard ───────────────────────────────────────────────────────────
+export APP_DIR
+export DASHBOARD_PORT=8099
+node /dashboard/server.js &
+bashio::log.info "Dashboard started on port ${DASHBOARD_PORT}"
+
 # ── Start NanoClaw ────────────────────────────────────────────────────────────
 bashio::log.info "Starting NanoClaw from: ${APP_DIR}"
 bashio::log.info "  assistant: ${ASSISTANT_NAME}, messenger: ${MESSENGER}"

@@ -45,6 +45,9 @@ RUN git config user.email "addon@nanoclaw.dev" \
 # Install dependencies and build
 RUN npm ci && npm run build
 
+# ── Dashboard ──────────────────────────────────────────────────────────────────
+COPY dashboard /dashboard
+
 # ── Startup script ───────────────────────────────────────────────────────────
 COPY run.sh /run.sh
 RUN chmod +x /run.sh
