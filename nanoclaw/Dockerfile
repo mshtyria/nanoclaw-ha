@@ -31,7 +31,16 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
 # Note: @anthropic-ai/claude-code is NOT needed here — it runs only inside
 # agent containers (built separately from /nanoclaw/container/Dockerfile)
 WORKDIR /nanoclaw
-RUN git clone --depth 1 https://github.com/qwibitai/nanoclaw.git . \
+RUN git clone https://github.com/qwibitai/nanoclaw.git . \
+    && git config user.email "addon@nanoclaw.dev" \
+    && git config user.name "NanoClaw Addon" \
+    && git remote add telegram https://github.com/qwibitai/nanoclaw-telegram.git \
+    && git fetch telegram main \
+    && (git merge telegram/main --no-edit || { \
+         git checkout --theirs package-lock.json; \
+         git add package-lock.json; \
+         git -c core.editor=true merge --continue; \
+       }) \
     && npm ci \
     && npm run build
 
