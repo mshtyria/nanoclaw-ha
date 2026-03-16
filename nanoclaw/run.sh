@@ -145,6 +145,16 @@ cp "${APP_DIR}/.env" "${APP_DIR}/data/env/env"
 # ── Ensure runtime directories exist ─────────────────────────────────────────
 mkdir -p "${APP_DIR}/store" "${APP_DIR}/data" "${APP_DIR}/groups/main" "${APP_DIR}/groups/global"
 
+# Clean stale IPC files from previous runs and fix permissions.
+# Agent containers run as node (uid 1000) but IPC dirs/files may be owned by root.
+if [[ -d "${APP_DIR}/data/ipc" ]]; then
+    find "${APP_DIR}/data/ipc" -type d -exec chmod 777 {} +
+    find "${APP_DIR}/data/ipc" -type f -exec chmod 666 {} +
+    # Remove stale input files (leftover from previous container sessions)
+    find "${APP_DIR}/data/ipc" -path '*/input/*.json' -delete 2>/dev/null
+    bashio::log.info "IPC directory cleaned and permissions fixed"
+fi
+
 # Copy default group configs if not present
 if [[ ! -f "${APP_DIR}/groups/main/CLAUDE.md" ]] && [[ -f "/nanoclaw/groups/main/CLAUDE.md" ]]; then
     cp -a /nanoclaw/groups/main/. "${APP_DIR}/groups/main/"
