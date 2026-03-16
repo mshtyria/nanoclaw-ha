@@ -156,13 +156,24 @@ if [[ -d "${APP_DIR}/data/ipc" ]]; then
 fi
 
 # Clean stale Claude Code sessions from previous failed runs.
-# Agent containers try "resumeAt: latest" but stale session refs cause errors.
+# Session IDs are stored in two places:
+# 1. SQLite messages.db → sessions table (orchestrator reads this to pass sessionId to containers)
+# 2. /data/sessions/{group}/.claude/ (Claude Code's own session files inside containers)
+# Both must be cleared so agents start fresh instead of trying to resume stale sessions.
 if [[ -d "${APP_DIR}/data/sessions" ]]; then
     find "${APP_DIR}/data/sessions" -type d -exec chmod 777 {} +
     find "${APP_DIR}/data/sessions" -type f -exec chmod 666 {} +
-    # Remove stale session data so agents start fresh
     find "${APP_DIR}/data/sessions" -name ".claude" -type d -exec rm -rf {} + 2>/dev/null
-    bashio::log.info "Session data cleaned"
+fi
+# Clear session IDs from SQLite so orchestrator doesn't pass stale IDs to new containers
+if [[ -f "${APP_DIR}/store/messages.db" ]]; then
+    node -e "
+      const Database = require('better-sqlite3');
+      const db = new Database('${APP_DIR}/store/messages.db');
+      try { db.exec('DELETE FROM sessions'); } catch(e) {}
+      db.close();
+    " 2>/dev/null
+    bashio::log.info "Session data cleaned (SQLite + files)"
 fi
 
 # Copy default group configs if not present
