@@ -60,6 +60,28 @@ fi
 
 bashio::log.info "docker info test: $(docker info --format '{{.ServerVersion}}' 2>&1)"
 
+# ── Generate .env file for NanoClaw ──────────────────────────────────────────
+# NanoClaw reads credentials from .env file, not from shell environment
+cat > /nanoclaw/.env <<ENVEOF
+ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+ASSISTANT_NAME=${ASSISTANT_NAME}
+ASSISTANT_HAS_OWN_NUMBER=${ASSISTANT_HAS_OWN_NUMBER}
+MAX_CONCURRENT_CONTAINERS=${MAX_CONCURRENT_CONTAINERS}
+CONTAINER_TIMEOUT=$(( CONTAINER_TIMEOUT_SEC * 1000 ))
+IDLE_TIMEOUT=$(( CONTAINER_TIMEOUT_SEC * 1000 ))
+CREDENTIAL_PROXY_PORT=3001
+ENVEOF
+
+if [[ "${MESSENGER}" == "telegram" ]]; then
+    echo "TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}" >> /nanoclaw/.env
+fi
+
+# Also write to data/env/env for agent containers
+mkdir -p /nanoclaw/data/env
+cp /nanoclaw/.env /nanoclaw/data/env/env
+
+bashio::log.info "Generated .env with credentials for NanoClaw"
+
 # ── Persistent data directory ────────────────────────────────────────────────
 # HA maps /data to persistent storage; move NanoClaw runtime dirs there.
 DATA_DIR=/data/nanoclaw
