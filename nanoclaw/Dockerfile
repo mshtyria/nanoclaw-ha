@@ -18,11 +18,9 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# ── Claude Code CLI ──────────────────────────────────────────────────────────
-# Required both by the NanoClaw orchestrator and by agent containers
-RUN npm install -g @anthropic-ai/claude-code
-
 # ── NanoClaw ─────────────────────────────────────────────────────────────────
+# Note: @anthropic-ai/claude-code is NOT needed here — it runs only inside
+# agent containers (built separately from /nanoclaw/container/Dockerfile)
 WORKDIR /nanoclaw
 RUN git clone --depth 1 https://github.com/qwibitai/nanoclaw.git . \
     && npm ci \
