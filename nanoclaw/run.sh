@@ -222,6 +222,7 @@ fi
 # ── Start dashboard ───────────────────────────────────────────────────────────
 export APP_DIR
 export DASHBOARD_PORT=8099
+export NODE_PATH="${APP_DIR}/node_modules"
 node /dashboard/server.js &
 bashio::log.info "Dashboard started on port ${DASHBOARD_PORT}"
 
