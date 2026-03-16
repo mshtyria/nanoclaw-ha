@@ -6,6 +6,7 @@ ASSISTANT_NAME=$(bashio::config 'assistant_name')
 ASSISTANT_HAS_OWN_NUMBER=$(bashio::config 'assistant_has_own_number')
 MESSENGER=$(bashio::config 'messenger')
 TELEGRAM_BOT_TOKEN=$(bashio::config 'telegram_bot_token')
+TELEGRAM_CHAT_ID=$(bashio::config 'telegram_chat_id')
 MAX_CONCURRENT_CONTAINERS=$(bashio::config 'max_concurrent_containers')
 CONTAINER_TIMEOUT_SEC=$(bashio::config 'container_timeout')
 LOG_LEVEL=$(bashio::config 'log_level')
@@ -129,6 +130,21 @@ if [[ "${MESSENGER}" == "whatsapp" ]] && [[ ! -d "${DATA_DIR}/.config/whatsapp" 
     bashio::log.info "A QR code will appear below. Scan it with WhatsApp:"
     bashio::log.info "  WhatsApp → Settings → Linked Devices → Link a Device"
     bashio::log.info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+fi
+
+# ── Register Telegram chat if configured ─────────────────────────────────────
+if [[ "${MESSENGER}" == "telegram" ]] && ! bashio::var.is_empty "${TELEGRAM_CHAT_ID}"; then
+    # Register the chat via NanoClaw's setup/register CLI
+    bashio::log.info "Registering Telegram chat: ${TELEGRAM_CHAT_ID}"
+    node /nanoclaw/dist/setup/register.js \
+        --jid "${TELEGRAM_CHAT_ID}" \
+        --name "HomeAssistant" \
+        --trigger "@${ASSISTANT_NAME}" \
+        --folder main \
+        --channel telegram \
+        --is-main \
+        --assistant-name "${ASSISTANT_NAME}" \
+        2>&1 || bashio::log.warning "Chat registration returned non-zero (may already be registered)"
 fi
 
 # ── Start NanoClaw ───────────────────────────────────────────────────────────

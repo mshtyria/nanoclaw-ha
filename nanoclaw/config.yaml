@@ -1,6 +1,6 @@
 name: NanoClaw
 description: Personal AI agent with container isolation. Connect Claude to WhatsApp or Telegram and automate tasks securely.
-version: "1.0.8"
+version: "1.0.9"
 slug: nanoclaw
 url: https://nanoclaw.dev
 init: false
@@ -31,6 +31,7 @@ options:
   assistant_has_own_number: false
   messenger: whatsapp
   telegram_bot_token: ""
+  telegram_chat_id: ""
   max_concurrent_containers: 5
   container_timeout: 1800
   log_level: info
@@ -41,6 +42,7 @@ schema:
   assistant_has_own_number: bool
   messenger: list(whatsapp|telegram)
   telegram_bot_token: str?
+  telegram_chat_id: str?
   max_concurrent_containers: int(1,20)
   container_timeout: int(60,86400)
   log_level: list(debug|info|warning|error)
