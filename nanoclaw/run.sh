@@ -86,13 +86,13 @@ else
     fi
 fi
 
-# Create symlink: host path → /data so process.cwd() returns host-visible path
-HOST_APP_PARENT=$(dirname "${HOST_APP}")
-mkdir -p "${HOST_APP_PARENT}" 2>/dev/null || true
-if [[ ! -e "${HOST_APP}" ]] && [[ "${HOST_APP}" != "${APP_DIR}" ]]; then
-    mkdir -p "$(dirname "${HOST_APP_PARENT}")" 2>/dev/null || true
-    # Create symlink chain from host path to actual /data
-    ln -sfn /data "$(dirname "${HOST_DATA}")/$(basename "${HOST_DATA}")" 2>/dev/null || true
+# Create symlink inside the container so HOST_APP path resolves to /data/app.
+# e.g. /mnt/data/supervisor/addons/data/62d3ce49_nanoclaw -> /data
+# Then HOST_APP (/mnt/data/.../app) exists inside the container too.
+if [[ "${HOST_DATA}" != "/data" ]] && [[ ! -e "${HOST_DATA}" ]]; then
+    mkdir -p "$(dirname "${HOST_DATA}")"
+    ln -sfn /data "${HOST_DATA}"
+    bashio::log.info "Symlink created: ${HOST_DATA} -> /data"
 fi
 
 # ── Generate .env file ───────────────────────────────────────────────────────
@@ -140,7 +140,7 @@ if [[ "${MESSENGER}" == "telegram" ]] && ! bashio::var.is_empty "${TELEGRAM_CHAT
     bashio::log.info "Registering Telegram chat: ${CHAT_JID}"
     node -e "
       const Database = require('better-sqlite3');
-      const db = new Database('${APP_DIR}/store/messages.db');
+      const db = new Database('${HOST_APP}/store/messages.db');
       db.exec(\`
         CREATE TABLE IF NOT EXISTS registered_groups (
           jid TEXT PRIMARY KEY, name TEXT, folder TEXT,
@@ -160,16 +160,10 @@ if [[ "${MESSENGER}" == "telegram" ]] && ! bashio::var.is_empty "${TELEGRAM_CHAT
 fi
 
 # ── Start NanoClaw from host-visible path ────────────────────────────────────
-# NanoClaw uses process.cwd() for docker -v mounts.
-# We must cd to the HOST path so Docker daemon can resolve the mount sources.
-if [[ -d "${HOST_APP}" ]] && [[ "${HOST_APP}" != "${APP_DIR}" ]]; then
-    RUN_DIR="${HOST_APP}"
-else
-    RUN_DIR="${APP_DIR}"
-fi
-
-bashio::log.info "Starting NanoClaw from: ${RUN_DIR}"
+# NanoClaw uses process.cwd() for docker -v mount paths.
+# cd to HOST_APP so Docker daemon can resolve mount source paths on the host.
+bashio::log.info "Starting NanoClaw from: ${HOST_APP}"
 bashio::log.info "  assistant: ${ASSISTANT_NAME}, messenger: ${MESSENGER}"
 
-cd "${RUN_DIR}"
+cd "${HOST_APP}"
 exec node dist/index.js
