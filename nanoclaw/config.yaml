@@ -1,6 +1,6 @@
 name: NanoClaw
 description: Personal AI agent with container isolation. Connect Claude to WhatsApp or Telegram and automate tasks securely.
-version: "1.0.1"
+version: "1.0.2"
 slug: nanoclaw
 url: https://nanoclaw.dev
 init: false
@@ -12,9 +12,7 @@ arch:
 # Pre-built image from CI — HA pulls instead of building locally
 image: ghcr.io/mshtyria/nanoclaw-ha-{arch}
 
-# NanoClaw spawns isolated Docker containers for each agent session.
-# privileged gives full Docker socket access; docker_api alone is not enough in HAOS.
-privileged: true
+# NanoClaw spawns isolated Docker containers for each agent session
 docker_api: true
 
 # Persistent storage for credentials, sessions, and agent data
